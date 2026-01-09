@@ -394,7 +394,7 @@ st.markdown(f"""
         color: #1f77b4;
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;
-        margin: 1rem 0 0.75rem 0;
+        margin: 0.5rem 0 0.5rem 0;
         font-size: 1.2rem;
         font-weight: 600;
         display: inline-block;
@@ -445,6 +445,11 @@ st.markdown(f"""
         padding-bottom: 0 !important;
     }}
     
+    /* 减少分隔线的上下边距 */
+    hr {{ 
+        margin: 0.25rem 0 !important;
+    }}
+
     /* 调整页脚本身的边距 */
     [data-testid="stMarkdownContainer"]:has(div[style*="text-align: center"]):last-of-type {{
         margin-bottom: 0 !important;
@@ -1469,6 +1474,8 @@ elif page == "📈 变化趋势和风险预测":
         # 显示班级数据表格
         st.markdown(f'<div class="subsection-header-with-icon">📊 {selected_class} 各月份数据</div>', unsafe_allow_html=True)
         display_class_df = class_data[['月份', '实际班级总分'] + [col for col in combined_df.columns if col not in ['月份', '班级', '实际班级总分'] and '班级' not in col]].copy()
+        # 将空值填充为0
+        display_class_df = display_class_df.fillna(0)
         display_class_df.index = range(1, len(display_class_df) + 1)
         display_class_df.index.name = "序号"
         st.dataframe(display_class_df, use_container_width=True)
@@ -1476,8 +1483,12 @@ elif page == "📈 变化趋势和风险预测":
         # 创建班级总分趋势图
         st.markdown('<div class="subsection-header-with-icon">📈 班级总分趋势</div>', unsafe_allow_html=True)
         
+        # 为趋势图准备数据（填充空值）
+        chart_data = class_data.copy()
+        chart_data['实际班级总分'] = chart_data['实际班级总分'].fillna(0)
+        
         fig_class = px.line(
-            class_data,
+            chart_data,
             x='月份',
             y='实际班级总分',
             title=f'{selected_class} 实际班级总分月度趋势',
@@ -1541,7 +1552,7 @@ elif page == "📈 变化趋势和风险预测":
                 # 使用简单的线性回归计算趋势斜率
                 # 月份转换为数值索引（0, 1, 2, ...）
                 x = np.array(range(len(class_data)))
-                y = np.array(class_data[total_score_col])
+                y = np.array(class_data[total_score_col].fillna(0))  # 填充空值以确保计算正确
                 
                 # 计算斜率
                 try:
@@ -1593,9 +1604,13 @@ elif page == "📈 变化趋势和风险预测":
                     class_data['月份排序'] = class_data['月份'].map(lambda x: month_order.index(x))
                     class_data = class_data.sort_values('月份排序')
                     
+                    # 为可视化准备数据（填充空值）
+                    vis_data = class_data.copy()
+                    vis_data[total_score_col] = vis_data[total_score_col].fillna(0)
+                    
                     fig_risk.add_trace(go.Scatter(
-                        x=class_data['月份'],
-                        y=class_data[total_score_col],
+                        x=vis_data['月份'],
+                        y=vis_data[total_score_col],
                         mode='lines+markers',
                         name=cls
                     ))
