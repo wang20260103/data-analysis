@@ -32,10 +32,8 @@ page = sidebar.render_sidebar()
 # 根据用户选择的页面调用相应的功能函数
 if page == "📁 数据导入":
     data_processing.data_import()
-elif page == "🧹 数据清洗":
-    data_processing.data_cleaning()
-elif page == "🔧 填充空值":
-    data_processing.fill_missing_values()
+elif page == "🔧 数据处理":
+    data_processing.data_processing()
 elif page == "🏆 查看前5名":
     rankings.view_top5()
 elif page == "📉 查看后5名":

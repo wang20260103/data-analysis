@@ -47,8 +47,24 @@ def class_score_analysis():
     display_df.index = range(1, len(display_df) + 1)
     display_df.index.name = "序号"
     
-    # 显示表格（通过全局CSS样式实现居中对齐）
-    st.dataframe(display_df, use_container_width=True)
+    # 使用HTML生成居中对齐的表格
+    html_table = f"""
+    <table style="width: 100%; border-collapse: collapse; text-align: center;">
+        <thead>
+            <tr style="background-color: #f0f2f6;">
+                <th style="padding: 8px; border: 1px solid #ddd;">序号</th>
+                {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in display_df.columns])}
+            </tr>
+        </thead>
+        <tbody>
+            {''.join([
+                '<tr>' + f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                for index, row in display_df.iterrows()
+            ])}
+        </tbody>
+    </table>
+    """
+    st.markdown(html_table, unsafe_allow_html=True)
     
     # 创建图表
     st.markdown('<div class="subsection-header-with-icon">📈 班级总分对比</div>', unsafe_allow_html=True)

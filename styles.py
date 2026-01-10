@@ -34,6 +34,7 @@ def get_background_images():
 def get_custom_css():
     bg_sidebar_base64, bg_title_base64 = get_background_images()
 
+    # 使用f-string，但确保CSS大括号被正确转义
     css = f"""
     <style>
         :root {{
@@ -62,28 +63,33 @@ def get_custom_css():
             border-radius: 0.5rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
-        /* 表格基本样式 - 除特定列外，其他列居中对齐 */
+        /* 表格基本样式 - 所有内容居中对齐 */
         /* 重置所有表格样式 */
         table {{
-            width: 100% !important;
+            width: 100%% !important;
             border-collapse: collapse !important;
+            text-align: center !important;
         }}
         
         /* 确保所有表头居中对齐 */
         th {{
             text-align: center !important;
             padding: 8px !important;
+            justify-content: center !important;
+            align-items: center !important;
         }}
         
-        /* 确保所有单元格默认居中对齐 */
+        /* 确保所有单元格默认居中对齐 - 针对所有类型的数据 */
         td {{
             text-align: center !important;
             padding: 8px !important;
+            justify-content: center !important;
+            align-items: center !important;
         }}
         
         /* 针对Streamlit生成的表格，增强选择器优先级 */
         .stDataFrame, .st-table {{
-            width: 100% !important;
+            width: 100%% !important;
         }}
         
         /* Streamlit表格表头 */
@@ -91,44 +97,15 @@ def get_custom_css():
             text-align: center !important;
             padding: 8px !important;
             background-color: #f0f2f6 !important;
-        }}
-        
-        /* Streamlit表格单元格 */
-        .stDataFrame td, .st-table td {{
-            text-align: center !important;
-            padding: 8px !important;
-        }}
-        
-        /* 针对特定列的样式 - 第2列（实际班级总分）和第3列（名次）靠左对齐 */
-        /* 使用更通用的选择器确保样式生效 */
-        .stDataFrame table tbody tr td:nth-child(2),
-        .st-table table tbody tr td:nth-child(2),
-        .streamlit-dataframe table tbody tr td:nth-child(2),
-        .dataframe table tbody tr td:nth-child(2),
-        .stDataFrame table tbody tr td:nth-child(3),
-        .st-table table tbody tr td:nth-child(3),
-        .streamlit-dataframe table tbody tr td:nth-child(3),
-        .dataframe table tbody tr td:nth-child(3) {{
-            text-align: left !important;
-            justify-content: flex-start !important;
+            justify-content: center !important;
             align-items: center !important;
         }}
         
-        /* 确保所有父容器下的表格都应用样式 */
-        .main .stDataFrame table tbody tr td:nth-child(2),
-        .main .stDataFrame table tbody tr td:nth-child(3),
-        .block-container .stDataFrame table tbody tr td:nth-child(2),
-        .block-container .stDataFrame table tbody tr td:nth-child(3),
-        .element-container .stDataFrame table tbody tr td:nth-child(2),
-        .element-container .stDataFrame table tbody tr td:nth-child(3),
-        .main .st-table table tbody tr td:nth-child(2),
-        .main .st-table table tbody tr td:nth-child(3),
-        .block-container .st-table table tbody tr td:nth-child(2),
-        .block-container .st-table table tbody tr td:nth-child(3),
-        .element-container .st-table table tbody tr td:nth-child(2),
-        .element-container .st-table table tbody tr td:nth-child(3) {{
-            text-align: left !important;
-            justify-content: flex-start !important;
+        /* Streamlit表格单元格 - 覆盖所有数据类型的默认对齐 */
+        .stDataFrame td, .st-table td {{
+            text-align: center !important;
+            padding: 8px !important;
+            justify-content: center !important;
             align-items: center !important;
         }}
         
@@ -143,23 +120,116 @@ def get_custom_css():
             align-items: center !important;
         }}
         
-        /* 强制覆盖Streamlit的默认样式 */
+        /* 强制覆盖Streamlit的默认样式 - 增强优先级 */
         [data-testid="stDataFrame"] th {{
             text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
         }}
         
         [data-testid="stDataFrame"] td {{
             text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
         }}
         
-        [data-testid="stDataFrame"] tbody tr td:nth-child(2),
-        [data-testid="stDataFrame"] tbody tr td:nth-child(3) {{
-            text-align: left !important;
+        /* 覆盖Streamlit数据框的内置样式 - 确保所有列都居中 */
+        .streamlit-dataframe td,
+        .dataframe td,
+        .streamlit-dataframe th,
+        .dataframe th {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
         }}
+        
+        /* 针对不同容器下的表格 - 增强覆盖 */
+        .main .stDataFrame table tbody tr td,
+        .block-container .stDataFrame table tbody tr td,
+        .element-container .stDataFrame table tbody tr td,
+        .main .st-table table tbody tr td,
+        .block-container .st-table table tbody tr td,
+        .element-container .st-table table tbody tr td {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+        
+        /* 针对数据框的内部元素 - 确保所有内容居中 */
+        .dataframe-container .dataframe td,
+        .dataframe-container .dataframe th {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+        
+        /* 终极覆盖 - 确保所有表格相关元素都居中 */
+        *[class*="dataframe"] td,
+        *[class*="dataframe"] th,
+        *[class*="table"] td,
+        *[class*="table"] th {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+        
+        /* 增强选择器 - 覆盖Streamlit的内置表格样式 */
+        #root .main .block-container .element-container .stDataFrame table th,
+        #root .main .block-container .element-container .stDataFrame table td,
+        #root .main .block-container .element-container .st-table table th,
+        #root .main .block-container .element-container .st-table table td {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+        
+        /* 针对Streamlit数据框的特定结构 */
+        [data-testid="stDataFrame"] > div > div > div > table th,
+        [data-testid="stDataFrame"] > div > div > div > table td {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+        
+        /* 覆盖数据框单元格的内容对齐 */
+        .dataframe td,
+        .dataframe th,
+        .stDataFrame td,
+        .stDataFrame th {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
+            display: table-cell !important;
+            vertical-align: middle !important;
+        }}
+        
+        /* 确保所有可能的表格结构都被覆盖 */
+        table th,
+        table td,
+        table thead th,
+        table tbody td,
+        table tfoot td {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+        
+        /* 针对Streamlit的特殊表格类 */
+        .stDataFrame__table th,
+        .stDataFrame__table td,
+        .stDataFrame__container th,
+        .stDataFrame__container td {{
+            text-align: center !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+        
+        /* 内联样式覆盖 - 确保所有表格元素都居中 */
+        /* 移除了过于宽泛的选择器，改为仅针对表格元素的选择器 */
         
         /* 确保数据表格内容容器的样式 */
         .dataframe-container {{
-            width: 100% !important;
+            width: 100%% !important;
         }}
         
         /* 确保单元格内的内容也应用对齐样式 */
@@ -426,8 +496,20 @@ def get_custom_css():
             padding-bottom: 0 !important;
             overflow-x: hidden;
         }}
+        
+        /* 减小数据导入页面中按钮列之间的间距 */
+        .stColumns {{
+            gap: 0.5rem !important;
+        }}
+        
+        /* 调整列内边距，让按钮更靠近 */
+        .stColumns > div {{
+            padding-right: 0.25rem !important;
+            padding-left: 0.25rem !important;
+        }}
     </style>
     """
+    
     return css
 
 # 应用自定义CSS

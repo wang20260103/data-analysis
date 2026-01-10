@@ -113,7 +113,26 @@ def trend_analysis():
             pivot_df.index.name = "序号"
             
             # 显示前10行数据
-            st.dataframe(pivot_df.head(10), use_container_width=True)
+            display_pivot = pivot_df.head(10)
+            
+            # 使用HTML生成居中对齐的表格
+            html_table = f"""
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr style="background-color: #f0f2f6;">
+                        <th style="padding: 8px; border: 1px solid #ddd;">序号</th>
+                        {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in display_pivot.columns])}
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join([
+                        '<tr>' + f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                        for index, row in display_pivot.iterrows()
+                    ])}
+                </tbody>
+            </table>
+            """
+            st.markdown(html_table, unsafe_allow_html=True)
         except Exception as e:
             st.error(f"创建横向预览时出错: {str(e)}")
             # 回退到基本预览
@@ -133,7 +152,24 @@ def trend_analysis():
             display_df.index = range(1, len(display_df) + 1)
             display_df.index.name = "序号"
             
-            st.dataframe(display_df, use_container_width=True)
+            # 使用HTML生成居中对齐的表格
+            html_table = f"""
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr style="background-color: #f0f2f6;">
+                        <th style="padding: 8px; border: 1px solid #ddd;">序号</th>
+                        {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in display_df.columns])}
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join([
+                        '<tr>' + f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                        for index, row in display_df.iterrows()
+                    ])}
+                </tbody>
+            </table>
+            """
+            st.markdown(html_table, unsafe_allow_html=True)
     else:
         # 没有找到总分列，显示基本预览
         st.markdown('<div class="subsection-header-with-icon">👀 基本数据预览</div>', unsafe_allow_html=True)
@@ -149,7 +185,24 @@ def trend_analysis():
         display_df.index = range(1, len(display_df) + 1)
         display_df.index.name = "序号"
         
-        st.dataframe(display_df, use_container_width=True)
+        # 使用HTML生成居中对齐的表格
+        html_table = f"""
+        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+                <tr style="background-color: #f0f2f6;">
+                    <th style="padding: 8px; border: 1px solid #ddd;">序号</th>
+                    {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in display_df.columns])}
+                </tr>
+            </thead>
+            <tbody>
+                {''.join([
+                    '<tr>' + f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                    for index, row in display_df.iterrows()
+                ])}
+            </tbody>
+        </table>
+        """
+        st.markdown(html_table, unsafe_allow_html=True)
     
     # 班级纵向对比
     st.markdown('<div class="subsection-header-with-icon">📈 班级纵向对比</div>', unsafe_allow_html=True)
@@ -180,7 +233,25 @@ def trend_analysis():
         display_class_df = display_class_df.fillna(0)
         display_class_df.index = range(1, len(display_class_df) + 1)
         display_class_df.index.name = "序号"
-        st.dataframe(display_class_df, use_container_width=True)
+        
+        # 使用HTML生成居中对齐的表格
+        html_table = f"""
+        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+                <tr style="background-color: #f0f2f6;">
+                    <th style="padding: 8px; border: 1px solid #ddd;">序号</th>
+                    {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in display_class_df.columns])}
+                </tr>
+            </thead>
+            <tbody>
+                {''.join([
+                    '<tr>' + f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                    for index, row in display_class_df.iterrows()
+                ])}
+            </tbody>
+        </table>
+        """
+        st.markdown(html_table, unsafe_allow_html=True)
         
         # 创建班级总分趋势图
         st.markdown('<div class="subsection-header-with-icon">📈 班级总分趋势</div>', unsafe_allow_html=True)
@@ -290,7 +361,24 @@ def trend_analysis():
                 display_risk_df['趋势斜率'] = display_risk_df['趋势斜率'].round(2)
                 display_risk_df['总分变化'] = display_risk_df['总分变化'].round(2)
                 
-                st.dataframe(display_risk_df, use_container_width=True)
+                # 使用HTML生成居中对齐的表格
+                html_table = f"""
+                <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <thead>
+                        <tr style="background-color: #f0f2f6;">
+                            <th style="padding: 8px; border: 1px solid #ddd;">序号</th>
+                            {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in display_risk_df.columns])}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {''.join([
+                            '<tr>' + f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                            for index, row in display_risk_df.iterrows()
+                        ])}
+                    </tbody>
+                </table>
+                """
+                st.markdown(html_table, unsafe_allow_html=True)
                 
                 # 可视化风险班级
                 st.markdown('<div class="subsubsection-header">📉 风险班级总分变化趋势</div>', unsafe_allow_html=True)
@@ -368,7 +456,25 @@ def trend_analysis():
         display_stats_df = monthly_stats.copy()
         display_stats_df.index = range(1, len(display_stats_df) + 1)
         display_stats_df.index.name = "序号"
-        st.dataframe(display_stats_df, use_container_width=True)
+        
+        # 使用HTML生成居中对齐的表格
+        html_table = f"""
+        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+                <tr style="background-color: #f0f2f6;">
+                    <th style="padding: 8px; border: 1px solid #ddd;">序号</th>
+                    {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in display_stats_df.columns])}
+                </tr>
+            </thead>
+            <tbody>
+                {''.join([
+                    '<tr>' + f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                    for index, row in display_stats_df.iterrows()
+                ])}
+            </tbody>
+        </table>
+        """
+        st.markdown(html_table, unsafe_allow_html=True)
         
         # 创建考核项目趋势图
         st.markdown('<div class="subsection-header-with-icon">📈 考核项目趋势</div>', unsafe_allow_html=True)

@@ -2,48 +2,133 @@ import streamlit as st
 import pandas as pd
 import os
 
+# 确保data目录存在
+if not os.path.exists('data'):
+    os.makedirs('data')
+
 # 数据导入功能
 def data_import():
     """实现数据导入功能"""
     st.markdown('<h2 class="section-header">📁 数据导入</h2>', unsafe_allow_html=True)
     
-    # 文件上传
+    # 使用绝对路径确保能正确读取data文件夹
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    data_dir = os.path.join(current_dir, 'data')
+    
+    # 确保data目录存在
+    os.makedirs(data_dir, exist_ok=True)
+    
+    # 文件上传 - 文件选择后自动保存到磁盘
     uploaded_file = st.file_uploader(
         "上传Excel文件",
         type=['xlsx'],
         help="支持.xlsx格式的Excel文件"
     )
     
-    # 或者选择本地文件
-    st.write("或者选择本地已有的Excel文件:")
-    excel_files = [f for f in os.listdir('data') if f.endswith('.xlsx')]
-    selected_file = st.selectbox("选择文件", excel_files) if excel_files else None
+    # 文件选择后自动保存到磁盘
+    if uploaded_file is not None:
+        try:
+            # 保存上传的文件到data文件夹
+            file_path = os.path.join(data_dir, uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            
+            # 显示成功信息
+            st.success(f"✅ 文件已成功上传并保存: {uploaded_file.name}")
+            
+            # 立即更新文件列表并强制刷新页面
+            st.rerun()
+        except Exception as e:
+            st.error(f"❌ 保存文件失败: {str(e)}")
     
-    # 读取数据按钮
-    if st.button("读取数据", type="primary"):
-        if uploaded_file is not None:
-            try:
-                df = pd.read_excel(uploaded_file)
-                st.session_state.raw_data = df
-                st.session_state.current_file = uploaded_file.name
-                st.success(f"成功读取文件: {uploaded_file.name}")
-            except Exception as e:
-                st.error(f"读取文件失败: {str(e)}")
-        elif selected_file:
-            try:
-                df = pd.read_excel(f"data/{selected_file}")
-                st.session_state.raw_data = df
-                st.session_state.current_file = selected_file
-                st.success(f"成功读取文件: {selected_file}")
-            except Exception as e:
-                st.error(f"读取文件失败: {str(e)}")
-        else:
-            st.warning("请先上传文件或选择本地文件")
+    # 或者选择本地已有的Excel文件
+    st.write("或者选择本地已有的Excel文件:")
+    # 每次都重新读取文件列表，确保实时更新
+    excel_files = [f for f in os.listdir(data_dir) if f.endswith('.xlsx')]
+    
+    if not excel_files:
+        st.info("📂 目前没有Excel文件，请先上传文件")
+        selected_file = None
+    else:
+        selected_file = st.selectbox("选择文件", excel_files, key="file_selector")
+    
+    # 按钮布局 - 使用紧凑的水平布局让两个按钮更靠近
+    if selected_file:
+        # 使用st.columns创建紧凑布局，让删除文件按钮更靠左
+        # 使用更小的列宽比例和更紧凑的gap
+        col1, col2, col3 = st.columns([0.2, 0.18, 0.62], gap="small")
+        
+        with col1:
+            # 读取数据按钮 - 移除use_container_width=True，使用默认大小
+            if st.button("读取数据", type="primary", key="read_data_btn"):
+                try:
+                    file_path = os.path.join(data_dir, selected_file)
+                    df = pd.read_excel(file_path)
+                    
+                    # 删除所有Unnamed:开头的列（空列）
+                    df = df.loc[:, ~df.columns.str.contains('^Unnamed:')]
+                    
+                    st.session_state.raw_data = df
+                    st.session_state.current_file = selected_file
+                    st.success(f"✅ 成功读取文件: {selected_file}")
+                except Exception as e:
+                    st.error(f"❌ 读取文件失败: {str(e)}")
+        
+        with col2:
+            # 删除文件按钮 - 移除use_container_width=True，使用默认大小
+            if st.button("删除文件", type="secondary", key="delete_file_btn"):
+                try:
+                    file_path = os.path.join(data_dir, selected_file)
+                    
+                    if os.path.exists(file_path):
+                        if os.access(file_path, os.W_OK):
+                            os.remove(file_path)
+                            st.success(f"✅ 成功删除文件: {selected_file}")
+                            
+                            if hasattr(st.session_state, 'current_file') and st.session_state.current_file == selected_file:
+                                st.session_state.current_file = None
+                                st.session_state.raw_data = None
+                                st.session_state.cleaned_data = None
+                                st.session_state.filled_data = None
+                            
+                            st.rerun()
+                        else:
+                            st.error(f"❌ 没有权限删除文件: {selected_file}")
+                    else:
+                        st.error(f"❌ 文件不存在: {selected_file}")
+                except Exception as e:
+                    st.error(f"❌ 删除文件失败: {str(e)}")
+        
+        with col3:
+            # 空列，用于占据剩余空间
+            pass
+    else:
+        # 只有在选择了文件时才显示删除按钮
+        if st.button("读取数据", type="primary", key="read_data_btn_empty"):
+            st.warning("⚠️ 请先选择要读取的文件")
     
     # 显示原始数据
     if st.session_state.raw_data is not None:
         st.markdown('<div class="subsection-header-with-icon">👀 数据预览</div>', unsafe_allow_html=True)
-        st.dataframe(st.session_state.raw_data.head(10))
+        
+        # 使用HTML生成居中对齐的表格
+        preview_data = st.session_state.raw_data.head(10)
+        html_table = f"""
+        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+                <tr style="background-color: #f0f2f6;">
+                    {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in preview_data.columns])}
+                </tr>
+            </thead>
+            <tbody>
+                {''.join([
+                    '<tr>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                    for _, row in preview_data.iterrows()
+                ])}
+            </tbody>
+        </table>
+        """
+        st.markdown(html_table, unsafe_allow_html=True)
         
         # 数据基本信息
         st.markdown('<div class="subsection-header-with-icon">📊 数据基本信息</div>', unsafe_allow_html=True)
@@ -64,7 +149,24 @@ def data_import():
             '非空值数量': st.session_state.raw_data.count().values,
             '缺失值数量': st.session_state.raw_data.isnull().sum().values
         })
-        st.dataframe(col_info)
+        
+        # 使用HTML生成居中对齐的列信息表格
+        col_html_table = f"""
+        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+                <tr style="background-color: #f0f2f6;">
+                    {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in col_info.columns])}
+                </tr>
+            </thead>
+            <tbody>
+                {''.join([
+                    '<tr>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                    for _, row in col_info.iterrows()
+                ])}
+            </tbody>
+        </table>
+        """
+        st.markdown(col_html_table, unsafe_allow_html=True)
 
 # 数据清洗功能
 def data_cleaning():
@@ -95,7 +197,24 @@ def data_cleaning():
                 '缺失值数量': missing_values[missing_values > 0].values,
                 '缺失比例': (missing_values[missing_values > 0].values / len(df) * 100).round(2)
             })
-            st.dataframe(missing_df)
+            
+            # 使用HTML生成居中对齐的表格
+            html_table = f"""
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr style="background-color: #f0f2f6;">
+                        {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in missing_df.columns])}
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join([
+                        '<tr>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                        for _, row in missing_df.iterrows()
+                    ])}
+                </tbody>
+            </table>
+            """
+            st.markdown(html_table, unsafe_allow_html=True)
         
         # 数据清洗选项
         st.markdown('<div class="subsection-header-with-icon">🧹 数据清洗选项</div>', unsafe_allow_html=True)
@@ -120,7 +239,25 @@ def data_cleaning():
             
             # 显示清洗后的数据
             st.markdown('<div class="subsection-header-with-icon">✅ 清洗后的数据预览</div>', unsafe_allow_html=True)
-            st.dataframe(cleaned_df.head(10))
+            preview_data = cleaned_df.head(10)
+            
+            # 使用HTML生成居中对齐的表格
+            html_table = f"""
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr style="background-color: #f0f2f6;">
+                        {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in preview_data.columns])}
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join([
+                        '<tr>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                        for _, row in preview_data.iterrows()
+                    ])}
+                </tbody>
+            </table>
+            """
+            st.markdown(html_table, unsafe_allow_html=True)
             
             # 清洗前后对比
             col1, col2 = st.columns(2)
@@ -129,24 +266,119 @@ def data_cleaning():
             with col2:
                 st.metric("清洗后数据行数", len(cleaned_df))
 
-# 填充空值功能
-def fill_missing_values():
-    """实现填充空值功能"""
-    st.markdown('<h2 class="section-header">🔧 填充空值</h2>', unsafe_allow_html=True)
+# 数据处理功能（合并数据清洗和填充空值）
+def data_processing():
+    """实现数据处理功能，包括数据清洗和填充空值"""
+    st.markdown('<h2 class="section-header">🔧 数据处理</h2>', unsafe_allow_html=True)
     
     if st.session_state.raw_data is None:
         st.warning("请先导入数据")
     else:
+        # 数据清洗部分
+        st.markdown('<div class="subsection-header-with-icon">🔍 数据质量分析</div>', unsafe_allow_html=True)
+        
+        # 显示数据质量问题
+        df = st.session_state.raw_data
+        missing_values = df.isnull().sum()
+        duplicate_rows = df.duplicated().sum()
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("重复行数", duplicate_rows)
+        with col2:
+            st.metric("有缺失值的列数", (missing_values > 0).sum())
+        
+        # 缺失值详情
+        if missing_values.sum() > 0:
+            st.markdown('<div class="subsection-header-with-icon">⚠️ 缺失值详情</div>', unsafe_allow_html=True)
+            missing_df = pd.DataFrame({
+                '列名': missing_values[missing_values > 0].index,
+                '缺失值数量': missing_values[missing_values > 0].values,
+                '缺失比例': (missing_values[missing_values > 0].values / len(df) * 100).round(2)
+            })
+            
+            # 使用HTML生成居中对齐的表格
+            html_table = f"""
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr style="background-color: #f0f2f6;">
+                        {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in missing_df.columns])}
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join([
+                        '<tr>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                        for _, row in missing_df.iterrows()
+                    ])}
+                </tbody>
+            </table>
+            """
+            st.markdown(html_table, unsafe_allow_html=True)
+        
+        # 数据清洗选项
+        st.markdown('<div class="subsection-header-with-icon">🧹 数据清洗选项</div>', unsafe_allow_html=True)
+        
+        remove_duplicates = st.checkbox("删除重复行", value=True)
+        
+        if st.button("开始清洗数据", type="primary", key="clean_data_button"):
+            cleaned_df = df.copy()
+            
+            # 删除重复行
+            if remove_duplicates:
+                before_count = len(cleaned_df)
+                cleaned_df = cleaned_df.drop_duplicates()
+                after_count = len(cleaned_df)
+                removed_count = before_count - after_count
+                if removed_count > 0:
+                    st.success(f"已删除 {removed_count} 行重复数据")
+            
+            # 保存清洗后的数据
+            st.session_state.cleaned_data = cleaned_df
+            st.success("数据清洗完成！")
+            
+            # 显示清洗后的数据
+            st.markdown('<div class="subsection-header-with-icon">✅ 清洗后的数据预览</div>', unsafe_allow_html=True)
+            preview_data = cleaned_df.head(10)
+            
+            # 使用HTML生成居中对齐的表格
+            html_table = f"""
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr style="background-color: #f0f2f6;">
+                        {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in preview_data.columns])}
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join([
+                        '<tr>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                        for _, row in preview_data.iterrows()
+                    ])}
+                </tbody>
+            </table>
+            """
+            st.markdown(html_table, unsafe_allow_html=True)
+            
+            # 清洗前后对比
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("原始数据行数", len(df))
+            with col2:
+                st.metric("清洗后数据行数", len(cleaned_df))
+        
+        # 分隔线
+        st.markdown("---")
+        
+        
         # 使用原始数据或清洗后的数据
         if st.session_state.cleaned_data is not None:
-            use_cleaned = st.checkbox("使用清洗后的数据", value=True)
-            df = st.session_state.cleaned_data if use_cleaned else st.session_state.raw_data
+            use_cleaned = st.checkbox("使用清洗后的数据", value=True, key="use_cleaned_checkbox")
+            df_fill = st.session_state.cleaned_data if use_cleaned else st.session_state.raw_data
         else:
-            df = st.session_state.raw_data
+            df_fill = st.session_state.raw_data
             use_cleaned = False
         
         # 显示有缺失值的列
-        missing_cols = df.columns[df.isnull().any()].tolist()
+        missing_cols = df_fill.columns[df_fill.isnull().any()].tolist()
         
         if not missing_cols:
             st.success("数据中没有缺失值！")
@@ -155,8 +387,8 @@ def fill_missing_values():
             st.info("将使用0填充所有缺失值")
             
             # 执行填充
-            if st.button("执行填充", type="primary"):
-                filled_df = df.copy()
+            if st.button("执行填充", type="primary", key="fill_data_button"):
+                filled_df = df_fill.copy()
                 filled_df = filled_df.fillna(0)
                 
                 # 保存填充后的数据
@@ -165,11 +397,29 @@ def fill_missing_values():
                 
                 # 显示填充后的数据
                 st.markdown('<div class="subsection-header-with-icon">💧 填充后的数据预览</div>', unsafe_allow_html=True)
-                st.dataframe(filled_df.head(10))
+                preview_data = filled_df.head(10)
+                
+                # 使用HTML生成居中对齐的表格
+                html_table = f"""
+                <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <thead>
+                        <tr style="background-color: #f0f2f6;">
+                            {''.join([f'<th style="padding: 8px; border: 1px solid #ddd;">{col}</th>' for col in preview_data.columns])}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {''.join([
+                            '<tr>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
+                            for _, row in preview_data.iterrows()
+                        ])}
+                    </tbody>
+                </table>
+                """
+                st.markdown(html_table, unsafe_allow_html=True)
                 
                 # 填充前后对比
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.metric("填充前缺失值", df.isnull().sum().sum())
+                    st.metric("填充前缺失值", df_fill.isnull().sum().sum())
                 with col2:
                     st.metric("填充后缺失值", filled_df.isnull().sum().sum())
