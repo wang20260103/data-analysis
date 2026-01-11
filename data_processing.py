@@ -20,9 +20,9 @@ def data_import():
     
     # 文件上传 - 文件选择后自动保存到磁盘
     uploaded_file = st.file_uploader(
-        "上传Excel文件",
-        type=['xlsx'],
-        help="支持.xlsx格式的Excel文件"
+        "上传数据文件",
+        type=['xlsx', 'csv'],
+        help="支持.xlsx和.csv格式的文件"
     )
     
     # 文件选择后自动保存到磁盘
@@ -41,16 +41,16 @@ def data_import():
         except Exception as e:
             st.error(f"❌ 保存文件失败: {str(e)}")
     
-    # 或者选择本地已有的Excel文件
-    st.write("或者选择本地已有的Excel文件:")
+    # 或者选择本地已有的数据文件
+    st.write("或者选择本地已有的数据文件:")
     # 每次都重新读取文件列表，确保实时更新
-    excel_files = [f for f in os.listdir(data_dir) if f.endswith('.xlsx')]
+    data_files = [f for f in os.listdir(data_dir) if f.endswith(('.xlsx', '.csv'))]
     
-    if not excel_files:
-        st.info("📂 目前没有Excel文件，请先上传文件")
+    if not data_files:
+        st.info("📂 目前没有数据文件，请先上传文件")
         selected_file = None
     else:
-        selected_file = st.selectbox("选择文件", excel_files, key="file_selector")
+        selected_file = st.selectbox("选择文件", data_files, key="file_selector")
     
     # 按钮布局 - 使用紧凑的水平布局让两个按钮更靠近
     if selected_file:
@@ -63,7 +63,16 @@ def data_import():
             if st.button("读取数据", type="primary", key="read_data_btn"):
                 try:
                     file_path = os.path.join(data_dir, selected_file)
-                    df = pd.read_excel(file_path)
+                    
+                    # 根据文件扩展名选择正确的读取方法
+                    if selected_file.endswith('.xlsx'):
+                        df = pd.read_excel(file_path)
+                    elif selected_file.endswith('.csv'):
+                        # 从第3行开始读取.csv文件（跳过前2行）
+                        df = pd.read_csv(file_path, skiprows=2)
+                    else:
+                        st.error(f"❌ 不支持的文件格式: {selected_file}")
+                        return
                     
                     # 删除所有Unnamed:开头的列（空列）
                     df = df.loc[:, ~df.columns.str.contains('^Unnamed:')]
@@ -76,7 +85,7 @@ def data_import():
         
         with col2:
             # 删除文件按钮 - 移除use_container_width=True，使用默认大小
-            if st.button("删除文件", type="secondary", key="delete_file_btn"):
+            if st.button("删除文件", type="primary", key="delete_file_btn"):
                 try:
                     file_path = os.path.join(data_dir, selected_file)
                     
