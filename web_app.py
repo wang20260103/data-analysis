@@ -3,6 +3,7 @@ import streamlit as st
 # 导入自定义模块
 import styles
 import sidebar
+import data_import
 import data_processing
 import rankings
 import class_score_analysis
@@ -31,7 +32,7 @@ page = sidebar.render_sidebar()
 
 # 根据用户选择的页面调用相应的功能函数
 if page == "📁 数据导入":
-    data_processing.data_import()
+    data_import.data_import()
 elif page == "🔧 数据处理":
     data_processing.data_processing()
 elif page == "🏆 查看前5名":
