@@ -31,6 +31,9 @@ def class_score_analysis():
     df = df.drop_duplicates(subset=['班级'], keep='first')  # 去重
     score_data = df[['班级', '实际班级总分']].copy()
     
+    # 计算平均分
+    average_score = score_data['实际班级总分'].mean()
+    
     # 排序选项
     sort_order = st.radio("排序方式", ["从高到低", "从低到高"], horizontal=True)
     
@@ -38,6 +41,20 @@ def class_score_analysis():
         score_data = score_data.sort_values('实际班级总分', ascending=False)
     elif sort_order == "从低到高":
         score_data = score_data.sort_values('实际班级总分', ascending=True)
+    
+    # 添加数据标注列
+    def add_annotation(row, rank, total_rows, avg_score):
+        if rank <= 5:
+            return "优秀"
+        elif rank > total_rows - 5:
+            return "待提高"
+        elif row['实际班级总分'] > avg_score:
+            return "良好"
+        else:
+            return "合格"
+    
+    total_rows = len(score_data)
+    score_data['数据标注'] = score_data.apply(lambda row: add_annotation(row, score_data.index.get_loc(row.name) + 1, total_rows, average_score), axis=1)
     
     # 显示数据表格
     st.markdown('<div class="subsection-header-with-icon">📚 班级总分数据</div>', unsafe_allow_html=True)
@@ -47,7 +64,28 @@ def class_score_analysis():
     display_df.index = range(1, len(display_df) + 1)
     display_df.index.name = "序号"
     
-    # 使用HTML生成居中对齐的表格
+    # 使用HTML生成居中对齐的表格，为不同标注的行设置不同的背景颜色
+    html_rows = []
+    for index, row in display_df.iterrows():
+        # 根据数据标注设置背景颜色
+        annotation = row['数据标注']
+        if annotation == '优秀':
+            bg_color = '#d4edda'  # 绿色
+        elif annotation == '良好':
+            bg_color = '#d1ecf1'  # 蓝色
+        elif annotation == '合格':
+            bg_color = '#fff3cd'  # 黄色
+        else:  # 待提高
+            bg_color = '#f8d7da'  # 红色
+        
+        # 生成行HTML
+        row_html = f'<tr style="background-color: {bg_color};">'
+        row_html += f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>'
+        for val in row:
+            row_html += f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>'
+        row_html += '</tr>'
+        html_rows.append(row_html)
+    
     html_table = f"""
     <table style="width: 100%; border-collapse: collapse; text-align: center;">
         <thead>
@@ -57,10 +95,7 @@ def class_score_analysis():
             </tr>
         </thead>
         <tbody>
-            {''.join([
-                '<tr>' + f'<td style="padding: 8px; border: 1px solid #ddd;">{index}</td>' + ''.join([f'<td style="padding: 8px; border: 1px solid #ddd;">{val}</td>' for val in row]) + '</tr>'
-                for index, row in display_df.iterrows()
-            ])}
+            {''.join(html_rows)}
         </tbody>
     </table>
     """
