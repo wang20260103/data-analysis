@@ -63,10 +63,22 @@ def data_import():
                     file_path = os.path.join(data_dir, selected_file)
                     # 根据文件扩展名选择正确的读取方法
                     if selected_file.endswith('.xlsx'):
-                        df = pd.read_excel(file_path)
+                        # 添加更详细的错误处理和日志
+                        try:
+                            df = pd.read_excel(file_path, engine='openpyxl')
+                        except ImportError:
+                            st.error(f"❌ 读取Excel文件失败: 缺少openpyxl库，请运行 'pip install openpyxl' 安装")
+                            return
+                        except Exception as e:
+                            st.error(f"❌ 读取Excel文件失败: {str(e)}")
+                            return
                     elif selected_file.endswith('.csv'):
                         # 从第3行开始读取.csv文件（跳过前2行）
-                        df = pd.read_csv(file_path, skiprows=2)
+                        try:
+                            df = pd.read_csv(file_path, skiprows=2)
+                        except Exception as e:
+                            st.error(f"❌ 读取CSV文件失败: {str(e)}")
+                            return
                     else:
                         st.error(f"❌ 不支持的文件格式: {selected_file}")
                         return
@@ -79,6 +91,9 @@ def data_import():
                     st.success(f"✅ 成功读取文件: {selected_file}")
                 except Exception as e:
                     st.error(f"❌ 读取文件失败: {str(e)}")
+                    st.error(f"❌ 错误类型: {type(e).__name__}")
+                    import traceback
+                    st.error(f"❌ 详细错误信息: {traceback.format_exc()}")
         
         with col2:
             # 删除文件按钮 - 移除use_container_width=True，使用默认大小
