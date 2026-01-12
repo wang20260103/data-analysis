@@ -54,7 +54,7 @@ def class_score_analysis():
             return "合格"
     
     total_rows = len(score_data)
-    score_data['数据标注'] = score_data.apply(lambda row: add_annotation(row, score_data.index.get_loc(row.name) + 1, total_rows, average_score), axis=1)
+    score_data['等级标注'] = score_data.apply(lambda row: add_annotation(row, score_data.index.get_loc(row.name) + 1, total_rows, average_score), axis=1)
     
     # 显示数据表格
     st.markdown('<div class="subsection-header-with-icon">📚 班级总分数据</div>', unsafe_allow_html=True)
@@ -68,7 +68,7 @@ def class_score_analysis():
     html_rows = []
     for index, row in display_df.iterrows():
         # 根据数据标注设置背景颜色
-        annotation = row['数据标注']
+        annotation = row['等级标注']
         if annotation == '优秀':
             bg_color = '#d4edda'  # 绿色
         elif annotation == '良好':

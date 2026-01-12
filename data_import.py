@@ -54,8 +54,6 @@ def data_import():
     
     # 按钮布局 - 使用紧凑的水平布局让两个按钮更靠近
     if selected_file:
-        # 使用st.columns创建紧凑布局，让删除文件按钮更靠左
-        # 使用更小的列宽比例和更紧凑的gap
         col1, col2, col3 = st.columns([0.2, 0.18, 0.62], gap="small")
         
         with col1:
@@ -63,7 +61,6 @@ def data_import():
             if st.button("读取数据", type="primary", key="read_data_btn"):
                 try:
                     file_path = os.path.join(data_dir, selected_file)
-                    
                     # 根据文件扩展名选择正确的读取方法
                     if selected_file.endswith('.xlsx'):
                         df = pd.read_excel(file_path)
