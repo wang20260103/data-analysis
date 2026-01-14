@@ -68,20 +68,9 @@ def view_top5():
         st.warning("请先导入数据或完成相应的数据处理步骤")
         return
     
-    # 检查是否有实际班级总分列
-    if '实际班级总分' not in df.columns:
-        st.error("数据中没有找到'实际班级总分'列")
-        return
-    
     # 获取前5名
-    if '班级' in df.columns:
-        top5 = df.nlargest(5, '实际班级总分')[['班级', '实际班级总分']]
-    else:
-        st.warning("数据中没有找到'班级'列，将使用索引作为班级标识")
-        temp_df = df.copy()
-        temp_df['班级'] = [f"班级{i+1}" for i in range(len(df))]
-        top5 = temp_df.nlargest(5, '实际班级总分')[['班级', '实际班级总分']]
-    
+    top5 = df.nlargest(5, '实际班级总分')[['班级', '实际班级总分']]
+   
     # 显示前5名表格
     st.markdown('<div class="subsection-header-with-icon">🏆 前5名班级</div>', unsafe_allow_html=True)
     
@@ -168,19 +157,8 @@ def view_bottom5():
         st.warning("请先导入数据或完成相应的数据处理步骤")
         return
     
-    # 检查是否有实际班级总分列
-    if '实际班级总分' not in df.columns:
-        st.error("数据中没有找到'实际班级总分'列")
-        return
-    
     # 获取后5名
-    if '班级' in df.columns:
-        bottom5 = df.nsmallest(5, '实际班级总分')
-    else:
-        st.warning("数据中没有找到'班级'列，将使用索引作为班级标识")
-        temp_df = df.copy()
-        temp_df['班级'] = [f"班级{i+1}" for i in range(len(df))]
-        bottom5 = temp_df.nsmallest(5, '实际班级总分')
+    bottom5 = df.nsmallest(5, '实际班级总分')
     
     # 显示后5名表格
     st.markdown('<div class="subsection-header-with-icon">📉 后5名班级</div>', unsafe_allow_html=True)

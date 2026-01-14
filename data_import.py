@@ -56,44 +56,35 @@ def data_import():
     if selected_file:
         col1, col2, col3 = st.columns([0.2, 0.18, 0.62], gap="small")
         
+        read_data_clicked = False
+        error_message = None
+        success_message = None
+        
         with col1:
             # 读取数据按钮 - 移除use_container_width=True，使用默认大小
             if st.button("读取数据", type="primary", key="read_data_btn"):
+                read_data_clicked = True
                 try:
                     file_path = os.path.join(data_dir, selected_file)
                     # 根据文件扩展名选择正确的读取方法
                     if selected_file.endswith('.xlsx'):
-                        # 添加更详细的错误处理和日志
-                        try:
-                            df = pd.read_excel(file_path, engine='openpyxl')
-                        except ImportError:
-                            st.error(f"❌ 读取Excel文件失败: 缺少openpyxl库，请运行 'pip install openpyxl' 安装")
-                            return
-                        except Exception as e:
-                            st.error(f"❌ 读取Excel文件失败: {str(e)}")
-                            return
+                        df = pd.read_excel(file_path)
                     elif selected_file.endswith('.csv'):
                         # 从第3行开始读取.csv文件（跳过前2行）
-                        try:
-                            df = pd.read_csv(file_path, skiprows=2)
-                        except Exception as e:
-                            st.error(f"❌ 读取CSV文件失败: {str(e)}")
-                            return
+                        df = pd.read_csv(file_path, skiprows=2)
                     else:
-                        st.error(f"❌ 不支持的文件格式: {selected_file}")
-                        return
+                        error_message = f"❌ 不支持的文件格式: {selected_file}"
+                        read_data_clicked = False
                     
-                    # 删除所有Unnamed:开头的列（空列）
-                    df = df.loc[:, ~df.columns.str.contains('^Unnamed:')]
-                    
-                    st.session_state.raw_data = df
-                    st.session_state.current_file = selected_file
-                    st.success(f"✅ 成功读取文件: {selected_file}")
+                    if read_data_clicked:
+                        # 删除所有Unnamed:开头的列（空列）
+                        df = df.loc[:, ~df.columns.str.contains('^Unnamed:')]
+                        
+                        st.session_state.raw_data = df
+                        st.session_state.current_file = selected_file
+                        success_message = f"✅ 成功读取文件: {selected_file}"
                 except Exception as e:
-                    st.error(f"❌ 读取文件失败: {str(e)}")
-                    st.error(f"❌ 错误类型: {type(e).__name__}")
-                    import traceback
-                    st.error(f"❌ 详细错误信息: {traceback.format_exc()}")
+                    error_message = f"❌ 读取文件失败: {str(e)}"
         
         with col2:
             # 删除文件按钮 - 移除use_container_width=True，使用默认大小
@@ -123,6 +114,12 @@ def data_import():
         with col3:
             # 空列，用于占据剩余空间
             pass
+        
+        # 在列布局外部显示提示信息，使其占据整个页面宽度
+        if error_message:
+            st.error(error_message)
+        if success_message:
+            st.success(success_message)
     else:
         # 只有在选择了文件时才显示删除按钮
         if st.button("读取数据", type="primary", key="read_data_btn_empty"):
