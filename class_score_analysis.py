@@ -43,18 +43,29 @@ def class_score_analysis():
         score_data = score_data.sort_values('实际班级总分', ascending=True)
     
     # 添加数据标注列
-    def add_annotation(row, rank, total_rows, avg_score):
-        if rank <= 5:
-            return "优秀"
-        elif rank > total_rows - 5:
-            return "待提高"
-        elif row['实际班级总分'] > avg_score:
+    def add_annotation(row, rank, total_rows, avg_score, sort_order):
+        # 根据排序方向调整排名逻辑
+        if sort_order == "从高到低":
+            # 排名1对应最高分，排名n对应最低分
+            if rank <= 5:
+                return "优秀"
+            elif rank > total_rows - 5:
+                return "待提高"
+        else:  # 从低到高
+            # 排名1对应最低分，排名n对应最高分
+            if rank <= 5:
+                return "待提高"
+            elif rank > total_rows - 5:
+                return "优秀"
+        
+        # 中间部分根据平均分判断
+        if row['实际班级总分'] > avg_score:
             return "良好"
         else:
             return "合格"
     
     total_rows = len(score_data)
-    score_data['等级标注'] = score_data.apply(lambda row: add_annotation(row, score_data.index.get_loc(row.name) + 1, total_rows, average_score), axis=1)
+    score_data['等级标注'] = score_data.apply(lambda row: add_annotation(row, score_data.index.get_loc(row.name) + 1, total_rows, average_score, sort_order), axis=1)
     
     # 显示数据表格
     st.markdown('<div class="subsection-header-with-icon">📚 班级总分数据</div>', unsafe_allow_html=True)
